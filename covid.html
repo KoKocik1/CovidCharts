@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID-19 Data Visualization</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        #map {
+            margin: auto;
+            height: 90vh;
+            width: 90vw;
+        }
+
+        .controls {
+            margin: 20px;
+        }
+
+        .controls label {
+            margin-right: 10px;
+        }
+
+        .controls button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div class="controls">
+        <label for="dataType">Data Type:</label>
+        <select id="dataType">
+            <option value="new_cases">New Cases</option>
+            <option value="total_cases">Total Cases</option>
+            <option value="new_deaths">New Deaths</option>
+            <option value="total_deaths">Total Deaths</option>
+            <option value="new_tests">New Tests</option>
+            <option value="total_tests">Total Tests</option>
+        </select>
+
+        <label for="dateSlider">Date:</label>
+        <input type="range" id="dateSlider" min="0" max="0" step="1" value="0">
+        <span id="dateLabel"></span>
+
+        <button id="start">Start</button>
+        <button id="stop">Stop</button>
+        <button id="reset">Reset</button>
+
+        <label for="speedControl">Speed:</label>
+        <input type="range" id="speedControl" min="1" max="1000" value="500">
+    </div>
+
+    <script>
+        // Załaduj worldGeoJSON (przykładowy URL, należy dostosować do faktycznej lokalizacji pliku)
+        fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+            .then(response => response.json())
+            .then(data => {
+                worldGeoJSON = data;
+                initMap();
+            });
+
+        var map;
+        var geojsonLayer;
+        var covidData = [];
+        var currentIndex = 0;
+        var animationInterval;
+        var speed = 500;
+        var maxIndex = 999;
+        var dataType = "new_cases";
+
+        function initMap() {
+            map = L.map('map', {}).setView([20, 0], 2);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+            }).addTo(map);
+
+            loadData();
+        }
+
+        function loadData() {
+            d3.csv("covid.csv").then(data => {
+                const groupedData = {};
+
+                // Iteracja po danych
+                data.forEach(d => {
+                    // Tworzenie klucza dla danej daty, jeśli nie istnieje
+                    if (!groupedData[d.date]) {
+                        groupedData[d.date] = {};
+                    }
+
+                    // Dodawanie danych dla danego kraju do danej daty
+                    groupedData[d.date][d.iso_code] = {
+                        new_cases: +d.new_cases,
+                        total_cases: +d.total_cases,
+                        new_deaths: +d.new_deaths,
+                        total_deaths: +d.total_deaths,
+                        new_tests: +d.new_tests,
+                        total_tests: +d.total_tests
+                    };
+                });
+
+                // Aktualizacja maksymalnej wartości suwaka daty
+                const dates = Object.keys(groupedData);
+                document.getElementById('dateSlider').max = dates.length - 1;
+
+                // Zapisanie zgrupowanych danych do zmiennej covidData
+                covidData = groupedData;
+                maxIndex = dates.length - 1;
+
+                updateMap();
+            });
+
+        }
+
+
+        function updateMap() {
+            if (geojsonLayer) map.removeLayer(geojsonLayer);
+
+            var dataType = document.getElementById('dataType').value;
+            var currentDate = Object.keys(covidData)[currentIndex];
+            var dateData = covidData[currentDate];
+
+            //var availableCountries = Object.keys(dateData);
+
+            geojsonLayer = L.geoJSON(worldGeoJSON, {
+                style: function (feature) {
+                    //if (availableCountries.includes(feature.id)) {
+                        var countryData = dateData[feature.id];
+                        var value = countryData===undefined?0:countryData[dataType];
+                        return {
+                            fillColor: getColor(value),
+                            weight: 1,
+                            opacity: 1,
+                            color: 'black',
+                            fillOpacity: 0.7
+                        };
+                    //}
+                }
+            }).addTo(map);
+
+
+            document.getElementById('dateLabel').innerText = currentDate;
+            document.getElementById('dateSlider').value = currentIndex;
+        }
+
+
+
+
+        function getColor(value) {
+            return value > 1000000 ? '#800026' :
+                value > 500000 ? '#BD0026' :
+                    value > 200000 ? '#E31A1C' :
+                        value > 100000 ? '#FC4E2A' :
+                            value > 50000 ? '#FD8D3C' :
+                                value > 20000 ? '#FEB24C' :
+                                    value > 10000 ? '#FED976' :
+                                        value > 1 ? '#FFEDA0' :
+                                            '#FFFFFF';
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            animationInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % maxIndex;
+                document.getElementById('dateSlider').value = currentIndex;
+                updateMap();
+            }, speed);
+        }
+
+        function stopAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+        }
+
+        function resetAnimation() {
+            currentIndex = 0;
+            document.getElementById('dateSlider').value = currentIndex;
+            stopAnimation();
+            updateMap();
+        }
+
+        document.getElementById('start').addEventListener('click', startAnimation);
+        document.getElementById('stop').addEventListener('click', stopAnimation);
+        document.getElementById('reset').addEventListener('click', resetAnimation);
+
+        document.getElementById('dateSlider').addEventListener('input', function () {
+            currentIndex = +this.value;
+            updateMap();
+        });
+
+        document.getElementById('speedControl').addEventListener('input', function () {
+            speed = this.value;
+            if (animationInterval) {
+                startAnimation();
+            }
+        });
+        document.getElementById('dataType').addEventListener('change', function() {
+            dataType = this.value;
+            updateMap();
+        });
+    </script>
+</body>
+
+</html>
