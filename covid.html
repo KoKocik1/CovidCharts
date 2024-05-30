@@ -9,6 +9,11 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <style>
+        body {
+            background-color: black;
+            color: whitesmoke;
+        }
+
         #map {
             margin: auto;
             height: 90vh;
@@ -25,6 +30,29 @@
 
         .controls button {
             margin-right: 10px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .legend div {
+            display: flex;
+            align-items: center;
+        }
+
+        .legend div span {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -53,16 +81,29 @@
         <label for="speedControl">Speed:</label>
         <input type="range" id="speedControl" min="1" max="1000" value="500">
     </div>
-
+    <!-- <div class="legend" id="legend">
+        <div><span style="background-color: #1b0008"></span> > 10,000,000</div>
+        <div><span style="background-color: #540019"></span> > 5,000,000</div>
+        <div><span style="background-color: #800026"></span> > 1,000,000</div>
+        <div><span style="background-color: #BD0026"></span> 500,000 - 1,000,000</div>
+        <div><span style="background-color: #E31A1C"></span> 200,000 - 500,000</div>
+        <div><span style="background-color: #FC4E2A"></span> 100,000 - 200,000</div>
+        <div><span style="background-color: #FD8D3C"></span> 50,000 - 100,000</div>
+        <div><span style="background-color: #FEB24C"></span> 20,000 - 50,000</div>
+        <div><span style="background-color: #FED976"></span> 10,000 - 20,000</div>
+        <div><span style="background-color: #FFEDA0"></span> < 10,000</div>
+        <div><span style="background-color: #FFFFFF"></span> < 0</div>
+    </div> -->
+    <div class="legend" id="legend"></div>
     <script>
         // Załaduj worldGeoJSON (przykładowy URL, należy dostosować do faktycznej lokalizacji pliku)
         fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
-        .then(response => response.json())
-        .then(data => {
-            worldGeoJSON = data;
-            initMap();
-        });
-        
+            .then(response => response.json())
+            .then(data => {
+                worldGeoJSON = data;
+                initMap();
+            });
+
         var map;
         var geojsonLayer;
         var covidData = [];
@@ -71,6 +112,18 @@
         var speed = 500;
         var maxIndex = 999;
         var dataType = "new_cases";
+
+        const thresholds = {
+            new_cases: [10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000, 5000],
+            total_cases: [10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000, 5000],
+            new_deaths: [100000, 50000, 10000, 5000, 2000, 1000, 500, 200, 100, 50],
+            total_deaths: [1000000, 500000, 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500],
+            new_tests: [10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000, 5000],
+            total_tests: [100000000, 50000000, 10000000, 5000000, 2000000, 1000000, 500000, 100000, 50000, 10000],
+        };
+
+        const colors = ['#1b0008', '#540019', '#800026', '#BD0026', '#E31A1C', '#FC4E2A', '#FD8D3C', '#FEB24C', '#FED976', '#FFEDA0', '#FFFFFF'];
+
 
         function initMap() {
             map = L.map('map', {}).setView([20, 0], 2);
@@ -86,6 +139,12 @@
         function loadData() {
             d3.csv("covid.csv").then(data => {
                 const groupedData = {};
+                let maxTests = 0;
+                let maxCases = 0;
+                let maxDeaths = 0;
+                let maxNewCases = 0;
+                let maxNewTests = 0;
+                let maxNewDeaths = 0;
 
                 // Iteracja po danych
                 data.forEach(d => {
@@ -103,6 +162,26 @@
                         new_tests: +d.new_tests,
                         total_tests: +d.total_tests
                     };
+
+                    // Aktualizacja maksymalnych wartości
+                    if (+d.total_tests > maxTests) {
+                        maxTests = +d.total_tests;
+                    }
+                    if (+d.total_cases > maxCases) {
+                        maxCases = +d.total_cases;
+                    }
+                    if (+d.total_deaths > maxDeaths) {
+                        maxDeaths = +d.total_deaths;
+                    }
+                    if (+d.new_cases > maxNewCases) {
+                        maxNewCases = +d.new_cases;
+                    }
+                    if (+d.new_tests > maxNewTests) {
+                        maxNewTests = +d.new_tests;
+                    }
+                    if (+d.new_deaths > maxNewDeaths) {
+                        maxNewDeaths = +d.new_deaths;
+                    }
                 });
 
                 // Aktualizacja maksymalnej wartości suwaka daty
@@ -113,10 +192,16 @@
                 covidData = groupedData;
                 maxIndex = dates.length - 1;
 
+                console.log("Max Tests: " + maxTests);
+                console.log("Max Cases: " + maxCases);
+                console.log("Max Deaths: " + maxDeaths);
+                console.log("Max New Cases: " + maxNewCases);
+                console.log("Max New Tests: " + maxNewTests);
+                console.log("Max New Deaths: " + maxNewDeaths);
                 updateMap();
             });
-
         }
+
 
 
         function updateMap() {
@@ -132,7 +217,7 @@
                 style: function (feature) {
                     if (availableCountries.includes(feature.id)) {
                         var countryData = dateData[feature.id];
-                        
+
                         var value = countryData === undefined ? 0 : countryData[dataType];
                         return {
                             fillColor: getColor(value),
@@ -141,7 +226,7 @@
                             color: 'black',
                             fillOpacity: 0.7
                         };
-                    }else{
+                    } else {
                         return {
                             fillColor: 'white',
                             weight: 1,
@@ -160,22 +245,24 @@
 
 
         function getColor(value) {
-            return value > 1000000 ? '#800026' :
-                value > 500000 ? '#BD0026' :
-                    value > 200000 ? '#E31A1C' :
-                        value > 100000 ? '#FC4E2A' :
-                            value > 50000 ? '#FD8D3C' :
-                                value > 20000 ? '#FEB24C' :
-                                    value > 10000 ? '#FED976' :
-                                        value > 1 ? '#FFEDA0' :
-                                            '#FFFFFF';
+            return value===0 ? '#FFFFFF' :
+                value > thresholds[dataType][0] ? colors[0] :
+                value > thresholds[dataType][1] ? colors[1] :
+                value > thresholds[dataType][2] ? colors[2] :
+                value > thresholds[dataType][3] ? colors[3] :
+                value > thresholds[dataType][4] ? colors[4] :
+                value > thresholds[dataType][5] ? colors[5] :
+                value > thresholds[dataType][6] ? colors[6] :
+                value > thresholds[dataType][7] ? colors[7] :
+                value > thresholds[dataType][8] ? colors[8] :
+                 colors[9];
         }
 
         function startAnimation() {
             if (animationInterval) clearInterval(animationInterval);
             animationInterval = setInterval(() => {
                 currentIndex = (currentIndex + 1);
-                if(currentIndex > maxIndex){
+                if (currentIndex > maxIndex) {
                     stopAnimation();
                     currentIndex = 0;
                     return;
@@ -213,8 +300,32 @@
         });
         document.getElementById('dataType').addEventListener('change', function () {
             dataType = this.value;
+            createLegend();
             updateMap();
         });
+        function createLegend() {
+            const legend = document.getElementById('legend');
+            legend.innerHTML = '';
+            const legendData = thresholds[dataType];
+
+            for (let i = 0; i < legendData.length; i++) {
+                const color = colors[i];
+                const value = legendData[i];
+
+                const legendItem = document.createElement('div');
+                const colorBox = document.createElement('span');
+                colorBox.style.backgroundColor = color;
+                legendItem.appendChild(colorBox);
+
+                const text = document.createTextNode(`> ${value.toLocaleString()}`);
+                legendItem.appendChild(text);
+
+                legend.appendChild(legendItem);
+            }
+        }
+
+        // Initial legend
+        createLegend(dataType);
     </script>
 </body>
 
