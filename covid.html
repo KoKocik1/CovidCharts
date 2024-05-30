@@ -57,12 +57,12 @@
     <script>
         // Załaduj worldGeoJSON (przykładowy URL, należy dostosować do faktycznej lokalizacji pliku)
         fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
-            .then(response => response.json())
-            .then(data => {
-                worldGeoJSON = data;
-                initMap();
-            });
-
+        .then(response => response.json())
+        .then(data => {
+            worldGeoJSON = data;
+            initMap();
+        });
+        
         var map;
         var geojsonLayer;
         var covidData = [];
@@ -76,7 +76,8 @@
             map = L.map('map', {}).setView([20, 0], 2);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 18,
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
             loadData();
@@ -125,13 +126,14 @@
             var currentDate = Object.keys(covidData)[currentIndex];
             var dateData = covidData[currentDate];
 
-            //var availableCountries = Object.keys(dateData);
+            var availableCountries = Object.keys(dateData);
 
             geojsonLayer = L.geoJSON(worldGeoJSON, {
                 style: function (feature) {
-                    //if (availableCountries.includes(feature.id)) {
+                    if (availableCountries.includes(feature.id)) {
                         var countryData = dateData[feature.id];
-                        var value = countryData===undefined?0:countryData[dataType];
+                        
+                        var value = countryData === undefined ? 0 : countryData[dataType];
                         return {
                             fillColor: getColor(value),
                             weight: 1,
@@ -139,7 +141,15 @@
                             color: 'black',
                             fillOpacity: 0.7
                         };
-                    //}
+                    }else{
+                        return {
+                            fillColor: 'white',
+                            weight: 1,
+                            opacity: 1,
+                            color: 'black',
+                            fillOpacity: 0.7
+                        };
+                    }
                 }
             }).addTo(map);
 
@@ -147,8 +157,6 @@
             document.getElementById('dateLabel').innerText = currentDate;
             document.getElementById('dateSlider').value = currentIndex;
         }
-
-
 
 
         function getColor(value) {
@@ -166,7 +174,12 @@
         function startAnimation() {
             if (animationInterval) clearInterval(animationInterval);
             animationInterval = setInterval(() => {
-                currentIndex = (currentIndex + 1) % maxIndex;
+                currentIndex = (currentIndex + 1);
+                if(currentIndex > maxIndex){
+                    stopAnimation();
+                    currentIndex = 0;
+                    return;
+                }
                 document.getElementById('dateSlider').value = currentIndex;
                 updateMap();
             }, speed);
@@ -198,7 +211,7 @@
                 startAnimation();
             }
         });
-        document.getElementById('dataType').addEventListener('change', function() {
+        document.getElementById('dataType').addEventListener('change', function () {
             dataType = this.value;
             updateMap();
         });
