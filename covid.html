@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COVID-19 Data Visualization</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
@@ -106,7 +107,8 @@
         var speed = 500;
         var maxIndex = 999;
         var dataType = "new_cases";
-
+        var wasZero = {};
+        var lastValue = {};
         const thresholds = {
             new_cases: [10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000, 5000],
             total_cases: [10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000, 5000],
@@ -123,7 +125,7 @@
         };
 
         const colors = ['#1b0008', '#540019', '#800026', '#BD0026', '#E31A1C', '#FC4E2A', '#FD8D3C', '#FEB24C',
-        '#FED976', '#FFEDA0', '#FFFFFF'];
+            '#FED976', '#FFEDA0', '#FFFFFF'];
 
         function initMap() {
             map = L.map('map', {}).setView([20, 0], 2);
@@ -252,26 +254,47 @@
 
             geojsonLayer = L.geoJSON(worldGeoJSON, {
                 style: function (feature) {
-                    if (availableCountries.includes(feature.id)) {
-                        var countryData = dateData[feature.id];
+                    //if (availableCountries.includes(feature.id)) {
+                    var countryData = dateData[feature.id];
 
-                        var value = countryData === undefined ? 0 : countryData[dataType];
-                        return {
-                            fillColor: getColor(value),
-                            weight: 1,
-                            opacity: 1,
-                            color: 'black',
-                            fillOpacity: 0.7
-                        };
-                    } else {
-                        return {
-                            fillColor: 'white',
-                            weight: 1,
-                            opacity: 1,
-                            color: 'black',
-                            fillOpacity: 0.7
-                        };
+                    var value = countryData === undefined ? 0 : countryData[dataType];
+                    if (!wasZero[feature.id]) {
+                        wasZero[feature.id] = 0;
                     }
+                    if (!lastValue[feature.id]) {
+                        lastValue[feature.id] = 0;
+                    }
+                    if (value === 0) {
+                        wasZero[feature.id]++;
+                    } else {
+                        wasZero[feature.id] = 0;
+                        lastValue[feature.id]=value;
+                    }
+
+                    // Jeśli było 7 kolejnych zer, ustaw wartość na 0
+                    if (wasZero[feature.id] >= 7) {
+                        value = 0;
+                    }
+                    else {
+                        value = lastValue[feature.id];
+                    }
+                    lastValue[feature.id] = value;
+                    return {
+                        fillColor: getColor(value),
+                        weight: 1,
+                        opacity: 1,
+                        color: 'black',
+                        fillOpacity: 0.7
+                    };
+                    // } else {
+                    //     return {
+                    //         fillColor: 'white',
+                    //         weight: 1,
+                    //         opacity: 1,
+                    //         color: 'black',
+                    //         fillOpacity: 0.7
+                    //     };
+                    // }
                 }
             }).addTo(map);
 
@@ -283,15 +306,15 @@
         function getColor(value) {
             return value === 0 ? '#FFFFFF' :
                 value > thresholds[dataType][0] ? colors[0] :
-                value > thresholds[dataType][1] ? colors[1] :
-                value > thresholds[dataType][2] ? colors[2] :
-                value > thresholds[dataType][3] ? colors[3] :
-                value > thresholds[dataType][4] ? colors[4] :
-                value > thresholds[dataType][5] ? colors[5] :
-                value > thresholds[dataType][6] ? colors[6] :
-                value > thresholds[dataType][7] ? colors[7] :
-                value > thresholds[dataType][8] ? colors[8] :
-                colors[9];
+                    value > thresholds[dataType][1] ? colors[1] :
+                        value > thresholds[dataType][2] ? colors[2] :
+                            value > thresholds[dataType][3] ? colors[3] :
+                                value > thresholds[dataType][4] ? colors[4] :
+                                    value > thresholds[dataType][5] ? colors[5] :
+                                        value > thresholds[dataType][6] ? colors[6] :
+                                            value > thresholds[dataType][7] ? colors[7] :
+                                                value > thresholds[dataType][8] ? colors[8] :
+                                                    colors[9];
         }
 
         function startAnimation() {
@@ -329,7 +352,7 @@
         });
 
         document.getElementById('speedControl').addEventListener('input', function () {
-            speed = 500-this.value;
+            speed = 500 - this.value;
             if (animationInterval) {
                 startAnimation();
             }
@@ -366,4 +389,3 @@
 </body>
 
 </html>
-
