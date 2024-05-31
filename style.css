@@ -1,0 +1,86 @@
+body {
+    background-color: black;
+    color: whitesmoke;
+}
+
+#map {
+    height: 80vh;
+    width: 55vw;
+    margin-bottom: 20px;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-around;
+    margin: 0 10vw;
+    align-items: center;
+}
+.controls *{
+    margin-right: 15px;
+}
+.controls label {
+    margin-right: 10px;
+}
+
+.controls button {
+    margin-right: 10px;
+}
+
+canvas {
+    width: 100% !important;
+    height: 400px !important;
+}
+
+.legend {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+    flex-direction: column;
+}
+
+.legend div {
+    display: flex;
+    align-items: center;
+}
+
+.legend div span {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    border: 1px solid white;
+}
+.date{
+    font-size: 1.5em;
+}
+
+h1{
+    text-align: center;
+    margin: 10px 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+}
+.mapContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+.buttons{
+    margin-top: 30px;
+}
+
+.bar {
+    fill: steelblue;
+}
+.bar:hover {
+    fill: orange;
+}
+.axis-label {
+    font-size: 14px;
+}
+#chart{
+    margin: 0 auto;
+    width: 80vw;
+}
