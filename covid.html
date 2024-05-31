@@ -17,10 +17,16 @@
 
 <body>
     <h1>COVID 2020-2024</h1>
+    <div class="legendContainer">
+        <div class="legend" id="legend"></div>
+    </div>
     <div class="mapContainer">
         <div id="map"></div>
-        <div class="legendContainer">
-            <div class="legend" id="legend"></div>
+        <div id="chart"></div>
+    </div>
+        <div class="legendContainer1">
+            
+            
             <div class="buttons mt-5">
                 <button class="btn btn-success" id="start">Start</button>
                 <button class="btn btn-danger" id="stop">Stop</button>
@@ -53,9 +59,8 @@
                     <option value="new_tests_per_thousand">New Tests Per Thousand</option>
                 </select>
             </div>
-        </div>
     </div>
-    <div id="chart"></div>
+    
    <script src="script.js"></script>
 </body>
 

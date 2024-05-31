@@ -340,7 +340,7 @@ function createLegend() {
   }
 }
 const margin = {top: 20, right: 30, bottom: 60, left: 90},
-              width = 1500 - margin.left - margin.right,
+              width = 800 - margin.left - margin.right,
               height = 800 - margin.top - margin.bottom;
 
         const svg = d3.select("#chart").append("svg")
