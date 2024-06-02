@@ -1,3 +1,4 @@
+//get geojson
 fetch(
   "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 )
@@ -7,17 +8,21 @@ fetch(
     initMap();
   });
 
+//********************* Init *********************//
 var map;
 var geojsonLayer;
-var covidData = [];
+var covidData = []; //main data of program
 var currentIndex = 0;
 var animationInterval;
-var speed = 500;
-var maxIndex = 999;
-var dataType = "new_cases";
-var wasZero = {};
-var lastValue = {};
+var speedAnimation = 500;
+var maxIndex = 999; //index to stop animation
+var dataType = "new_cases"; // type of data to show
+var sevenDaysWithouData = {}; //list to delete data from map after 7 days without data
+var lastValueOnMap = {};
+var dataTypeColumnChart = "countries"; // countries, continents
+const countryCodes = {}; // switch country code to country name
 
+// color pallete for column chart
 const colorPalette = [
   "#1f77b4",
   "#ff7f0e",
@@ -30,22 +35,9 @@ const colorPalette = [
   "#bcbd22",
   "#17becf",
 ];
-const countryColorMap = {};
+const countryColorMap = {}; // unique colors for column chart
 
-function updateCountryColors(countries) {
-  for (const country in countryColorMap) {
-    if (!countries.includes(country)) {
-      colorPalette.push(countryColorMap[country]);
-      delete countryColorMap[country];
-    }
-  }
-  countries.forEach((country, index) => {
-    if (countryColorMap[country] === undefined) {
-      countryColorMap[country] = colorPalette.shift(); // Przypisz kolor i usuń go z dostępnych
-    }
-  });
-}
-
+// colors for map legend
 const thresholds = {
   new_cases: [
     10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000,
@@ -83,9 +75,8 @@ const thresholds = {
   new_tests_per_thousand: [500, 450, 400, 350, 300, 250, 200, 150, 100, 50],
 };
 
-const countryCodes = {};
-
-const colors = [
+//colors for map
+const colorsMap = [
   "#1b0008",
   "#540019",
   "#800026",
@@ -99,25 +90,30 @@ const colors = [
   "#FFFFFF",
 ];
 
-// Initial legend
-createLegend();
+//********************* column chart prepare *********************//
+const margin = { top: 20, right: 30, bottom: 60, left: 150 },
+  width = 700 - margin.left - margin.right,
+  height = 500 - margin.top - margin.bottom;
 
-function initMap() {
-  map = L.map("map", {}).setView([20, 0], 2);
+const svg = d3
+  .select("#chart")
+  .append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
+const x = d3.scaleLinear().range([0, width]);
+const y = d3.scaleBand().range([height, 0]).padding(0.1);
 
-  loadData();
-}
+svg
+  .append("g")
+  .attr("class", "x-axis")
+  .attr("transform", `translate(0,${height})`);
 
-function countryCodeToName(code) {
-  return countryCodes[code] || "Unknown"; // Zwraca nazwę państwa lub "Unknown", jeśli skrót nie został znaleziony w słowniku
-}
+svg.append("g").attr("class", "y-axis");
 
+//********************** CSV LOAD DATA *********************//
 function loadData() {
   d3.csv("covid.csv").then((data) => {
     const groupedData = {};
@@ -135,6 +131,7 @@ function loadData() {
     let maxTotalTestsPerThousand = 0;
     let maxNewTestsPerThousand = 0;
 
+    //prepare dist to change shortcut to country name
     data.forEach((row) => {
       const code = row.iso_code;
       const country = row.location;
@@ -143,6 +140,7 @@ function loadData() {
       }
     });
 
+    // group data and calculate max points
     data.forEach((d) => {
       if (!groupedDataTemp[d.date]) {
         groupedDataTemp[d.date] = {};
@@ -200,20 +198,24 @@ function loadData() {
         maxNewTestsPerThousand = +d.new_tests_per_thousand;
       }
     });
-    // Aktualizacja maksymalnej wartości suwaka daty
+
     let tempDates = Object.keys(groupedDataTemp);
     const dates = tempDates.sort();
 
+    // delete data after 10.05.24 - strange data
     dates.forEach((key) => {
       if (new Date(key) <= new Date("2024-05-10")) {
         groupedData[key] = groupedDataTemp[key];
       }
     });
-    covidData = groupedData;
-    document.getElementById("dateSlider").max =
-      Object.keys(covidData).length - 1;
 
-    maxIndex = groupedData.length - 1;
+    // main data use for map and column chart
+    covidData = groupedData;
+
+    maxIndex = Object.keys(covidData).length - 1;
+
+    //data slider max point
+    document.getElementById("dateSlider").max = maxIndex;
 
     console.log("Max Tests: " + maxTests);
     console.log("Max Cases: " + maxCases);
@@ -232,10 +234,47 @@ function loadData() {
   });
 }
 
+//********************** MAP CHART *********************//
+function initMap() {
+  map = L.map("map", {}).setView([20, 0], 2);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  loadData();
+}
+
+function createLegend() {
+  const legend = document.getElementById("legend");
+  legend.innerHTML = "";
+  const legendData = thresholds[dataType];
+
+  for (let i = 0; i < legendData.length; i++) {
+    const color = colorsMap[i];
+    const value = legendData[i];
+
+    const legendItem = document.createElement("div");
+    const colorBox = document.createElement("span");
+    colorBox.style.backgroundColor = color;
+    legendItem.appendChild(colorBox);
+
+    const text = document.createTextNode(`> ${value.toLocaleString()}`);
+    legendItem.appendChild(text);
+
+    legend.appendChild(legendItem);
+  }
+}
+
+function countryCodeToName(code) {
+  return countryCodes[code] || "Unknown";
+}
+
+//********************** UPDATE MAP CHART **********************//
 function updateMap() {
   if (geojsonLayer) map.removeLayer(geojsonLayer);
-
-  var dataType = document.getElementById("dataType").value;
   var currentDate = Object.keys(covidData)[currentIndex];
   var dateData = covidData[currentDate];
 
@@ -246,26 +285,26 @@ function updateMap() {
       var countryData = dateData[feature.id];
 
       var value = countryData === undefined ? 0 : countryData[dataType];
-      if (!wasZero[feature.id]) {
-        wasZero[feature.id] = 0;
+      if (!sevenDaysWithouData[feature.id]) {
+        sevenDaysWithouData[feature.id] = 0;
       }
-      if (!lastValue[feature.id]) {
-        lastValue[feature.id] = 0;
+      if (!lastValueOnMap[feature.id]) {
+        lastValueOnMap[feature.id] = 0;
       }
       if (value === 0) {
-        wasZero[feature.id]++;
+        sevenDaysWithouData[feature.id]++;
       } else {
-        wasZero[feature.id] = 0;
-        lastValue[feature.id] = value;
+        sevenDaysWithouData[feature.id] = 0;
+        lastValueOnMap[feature.id] = value;
       }
 
       // Jeśli było 7 kolejnych zer, ustaw wartość na 0
-      if (wasZero[feature.id] >= 7) {
+      if (sevenDaysWithouData[feature.id] >= 7) {
         value = 0;
       } else {
-        value = lastValue[feature.id];
+        value = lastValueOnMap[feature.id];
       }
-      lastValue[feature.id] = value;
+      lastValueOnMap[feature.id] = value;
       return {
         fillColor: getColor(value),
         weight: 1,
@@ -280,30 +319,7 @@ function updateMap() {
   document.getElementById("dateSlider").value = currentIndex;
 }
 
-function getColor(value) {
-  return value === 0
-    ? "#FFFFFF"
-    : value > thresholds[dataType][0]
-    ? colors[0]
-    : value > thresholds[dataType][1]
-    ? colors[1]
-    : value > thresholds[dataType][2]
-    ? colors[2]
-    : value > thresholds[dataType][3]
-    ? colors[3]
-    : value > thresholds[dataType][4]
-    ? colors[4]
-    : value > thresholds[dataType][5]
-    ? colors[5]
-    : value > thresholds[dataType][6]
-    ? colors[6]
-    : value > thresholds[dataType][7]
-    ? colors[7]
-    : value > thresholds[dataType][8]
-    ? colors[8]
-    : colors[9];
-}
-
+//********************** MAP CHART ANIMATION *********************//
 function startAnimation() {
   if (animationInterval) clearInterval(animationInterval);
   animationInterval = setInterval(() => {
@@ -315,7 +331,7 @@ function startAnimation() {
     }
     document.getElementById("dateSlider").value = currentIndex;
     updateMap();
-  }, speed);
+  }, speedAnimation);
 }
 
 function stopAnimation() {
@@ -328,77 +344,12 @@ function resetAnimation() {
   stopAnimation();
   updateMap();
 }
-
-document.getElementById("start").addEventListener("click", startAnimation);
-document.getElementById("stop").addEventListener("click", stopAnimation);
-document.getElementById("reset").addEventListener("click", resetAnimation);
-
-document.getElementById("dateSlider").addEventListener("input", function () {
-  currentIndex = +this.value;
-  updateMap();
-});
-
-document.getElementById("speedControl").addEventListener("input", function () {
-  speed = 500 - this.value;
-  if (animationInterval) {
-    startAnimation();
-  }
-});
-document.getElementById("dataType").addEventListener("change", function () {
-  dataType = this.value;
-  createLegend();
-  updateMap();
-});
-function createLegend() {
-  const legend = document.getElementById("legend");
-  legend.innerHTML = "";
-  const legendData = thresholds[dataType];
-
-  for (let i = 0; i < legendData.length; i++) {
-    const color = colors[i];
-    const value = legendData[i];
-
-    const legendItem = document.createElement("div");
-    const colorBox = document.createElement("span");
-    colorBox.style.backgroundColor = color;
-    legendItem.appendChild(colorBox);
-
-    const text = document.createTextNode(`> ${value.toLocaleString()}`);
-    legendItem.appendChild(text);
-
-    legend.appendChild(legendItem);
-  }
-}
-const margin = { top: 20, right: 30, bottom: 60, left: 150 },
-  width = 700 - margin.left - margin.right,
-  height = 500 - margin.top - margin.bottom;
-
-const svg = d3
-  .select("#chart")
-  .append("svg")
-  .attr("width", width + margin.left + margin.right)
-  .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-  .attr("transform", `translate(${margin.left},${margin.top})`);
-
-const x = d3.scaleLinear().range([0, width]);
-const y = d3.scaleBand().range([height, 0]).padding(0.1);
-
-svg
-  .append("g")
-  .attr("class", "x-axis")
-  .attr("transform", `translate(0,${height})`);
-
-svg.append("g").attr("class", "y-axis");
-
+//**********************  COLUMN CHART MANAGEMENT *********************//
 function updateChartColumn(data) {
-  const dataType = document.getElementById("dataType").value;
-
   if (!dataType.includes("total")) {
     svg.selectAll(".bar").remove();
     return;
   }
-  var countryType = document.getElementById("countryType").value;
 
   let countries = Object.entries(data).map(([country, values]) => ({
     country: countryCodeToName(country),
@@ -415,21 +366,18 @@ function updateChartColumn(data) {
     "Australia",
   ];
 
-  if (countryType == "country") {
+  const notAllowedPositions = [
+    "World",
+    "High income",
+    "Upper middle income",
+    "Lower middle income",
+  ];
+
+  if (dataTypeColumnChart == "countries") {
     countries = countries.filter(
       (entry) =>
-        entry.country !== "World" &&
-        entry.country !== "High income" &&
-        entry.country !== "Upper middle income" &&
-        entry.country !== "Lower middle income" &&
-        entry.country !== "Asia" &&
-        entry.country !== "Europe" &&
-        entry.country !== "European Union" &&
-        entry.country !== "North America" &&
-        entry.country !== "South America" &&
-        entry.country !== "Africa" &&
-        entry.country !== "South Africa" &&
-        entry.country !== "Australia"
+        !allowedCountries.includes(entry.country) &&
+        !notAllowedPositions.includes(entry.country)
     );
   } else {
     countries = countries.filter((entry) =>
@@ -448,6 +396,7 @@ function updateChartColumn(data) {
 
   svg
     .select(".x-axis")
+    .style("font-size", "16px")
     .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".2s")));
 
   svg
@@ -471,10 +420,76 @@ function updateChartColumn(data) {
     .attr("y", (d) => y(d.country))
     .attr("height", y.bandwidth());
 
-  console.log(countryColorMap);
   bars.exit().remove();
 }
 
+//********************** Colors management column chart *********************//
+function updateCountryColors(countries) {
+  for (const country in countryColorMap) {
+    if (!countries.includes(country)) {
+      colorPalette.push(countryColorMap[country]);
+      delete countryColorMap[country];
+    }
+  }
+  countries.forEach((country, index) => {
+    if (countryColorMap[country] === undefined) {
+      countryColorMap[country] = colorPalette.shift(); // Przypisz kolor i usuń go z dostępnych
+    }
+  });
+}
+//********************** Colors management map *********************//
+function getColor(value) {
+  return value === 0
+    ? "#FFFFFF"
+    : value > thresholds[dataType][0]
+    ? colorsMap[0]
+    : value > thresholds[dataType][1]
+    ? colorsMap[1]
+    : value > thresholds[dataType][2]
+    ? colorsMap[2]
+    : value > thresholds[dataType][3]
+    ? colorsMap[3]
+    : value > thresholds[dataType][4]
+    ? colorsMap[4]
+    : value > thresholds[dataType][5]
+    ? colorsMap[5]
+    : value > thresholds[dataType][6]
+    ? colorsMap[6]
+    : value > thresholds[dataType][7]
+    ? colorsMap[7]
+    : value > thresholds[dataType][8]
+    ? colorsMap[8]
+    : colorsMap[9];
+}
+
+//********************** Event listeners **********************//
+document.getElementById("start").addEventListener("click", startAnimation);
+document.getElementById("stop").addEventListener("click", stopAnimation);
+document.getElementById("reset").addEventListener("click", resetAnimation);
+
+document.getElementById("dateSlider").addEventListener("input", function () {
+  currentIndex = +this.value;
+  updateMap();
+});
+
 document
-  .getElementById("dataType")
-  .addEventListener("change", () => updateChartColumn(data));
+  .getElementById("dataTypeColumnChart")
+  .addEventListener("input", function () {
+    dataTypeColumnChart = this.value;
+    updateMap();
+  });
+
+document.getElementById("speedControl").addEventListener("input", function () {
+  speedAnimation = 500 - this.value;
+  if (animationInterval) {
+    startAnimation();
+  }
+});
+document.getElementById("dataType").addEventListener("change", function () {
+  dataType = this.value;
+  createLegend();
+  updateMap();
+});
+
+// Initial legend
+createLegend();

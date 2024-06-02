@@ -32,11 +32,11 @@
                 </div>
                 <div class="speed mt-2">
                     <label for="speedControl">Speed:</label>
-                    <input class="form-range" type="range" id="speedControl" min="0" max="499" value="1">
+                    <input class="form-range accent" type="range" id="speedControl" min="0" max="499" value="1">
                 </div>
                 <div class="">
                     <div class="selectData mt-2">
-                        <select class="form-select" id="dataType">
+                        <select class="form-select bg-dark text-white" id="dataType">
                             <option value="new_cases">New Cases</option>
                             <option value="total_cases">Total Cases</option>
                             <option value="new_deaths">New Deaths</option>
@@ -53,9 +53,9 @@
                     </div>
 
                     <div class="selectData mt-2">
-                        <select class="form-select" id="countryType">
-                            <option value="country">Countries</option>
-                            <option value="continent">Continent</option>
+                        <select class="form-select bg-dark text-white" id="dataTypeColumnChart">
+                            <option value="countries">Countries</option>
+                            <option value="continents">Continent</option>
                         </select>
                     </div>
                 </div>
@@ -64,14 +64,15 @@
 
     </div>
     <div class="legendContainer1">
+
+        <svg id="timeLabel" width="1000" height="90"></svg>
         <div class="dateContainer mt-2">
             <label for="dateSlider">Date:</label>
-            <input class="form-range" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
+            <input class="form-range accent" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
         </div>
-        <svg id="timeLabel" width="1000" height="90"></svg>
     </div>
-    <script src="js/timeLabel.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/timeLine.js"></script>
 </body>
 
 </html>

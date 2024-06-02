@@ -1,12 +1,14 @@
-const svgTime = d3.select("svg");
+const svgTime = d3.select("#timeLabel");
 const marginTime = { top: 20, right: 100, bottom: 50, left: 100 };
 const widthTime = +svgTime.attr("width") - marginTime.left - marginTime.right;
 const heightTime = +svgTime.attr("height") - marginTime.top - marginTime.bottom;
 
-const startDateTime = new Date("2019-12-31");
-const startDateData = new Date("2020-01-01");
-const endDateTime = new Date("2024-05-10");
+// time for timeLine
+const startDateTime = new Date("2019-12-31"); // for 2020 on x asix
+const startDateData = new Date("2020-01-01"); // real data start
+const endDateTime = new Date("2024-05-10"); //end data
 
+//time under chart
 const xTime = d3
   .scaleTime()
   .domain([startDateTime, endDateTime])
@@ -31,6 +33,7 @@ const xAxis = (g) => {
     );
 };
 
+// contruction of chart
 const g = svgTime
   .append("g")
   .attr("transform", `translate(${marginTime.left},${marginTime.top})`);
@@ -58,20 +61,13 @@ g.append("text")
   .attr("color", "white")
   .text(d3.timeFormat("%b %d, %Y")(endDateTime));
 
+//slider settings
 const dateSliderTime = document.getElementById("dateSlider");
-
 const timeDiffTime = endDateTime.getTime() - startDateData.getTime();
 const daysDiffTime = Math.ceil(timeDiffTime / (1000 * 3600 * 24));
 dateSliderTime.max = daysDiffTime;
 
-dateSliderTime.addEventListener("input", function () {
-  const selectedDateTime = new Date(
-    startDateData.getTime() + this.value * 24 * 60 * 60 * 1000
-  );
-  console.log("Selected Date:", selectedDateTime);
-  updateSliderPosition(selectedDateTime);
-});
-
+//********** CHART DATALINE ***********//
 function updateSliderPosition(date) {
   const xPos = xTime(date);
   g.selectAll(".slider-marker").remove();
@@ -91,7 +87,17 @@ function updateSliderPosition(date) {
     .attr("y", heightTime + 30)
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
+    .style("font-size", "22px")
+    .style("fill", "yellow")
     .text(d3.timeFormat("%b %d, %Y")(date));
 }
+
+//********** EVENT LISTENERS ***********/
+dateSliderTime.addEventListener("input", function () {
+  const selectedDateTime = new Date(
+    startDateData.getTime() + this.value * 24 * 60 * 60 * 1000
+  );
+  updateSliderPosition(selectedDateTime);
+});
 
 updateSliderPosition(startDateTime);

@@ -136,3 +136,7 @@ h1 {
     align-items: center;
     justify-content: space-evenly
 }
+
+.accent {
+    accent-color: red;
+}
