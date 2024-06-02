@@ -14,9 +14,11 @@ body {
     margin: 0 10vw;
     align-items: center;
 }
-.controls *{
+
+.controls * {
     margin-right: 15px;
 }
+
 .controls label {
     margin-right: 10px;
 }
@@ -48,42 +50,49 @@ canvas {
     margin-right: 5px;
     border: 1px solid white;
 }
-.date{
+
+.date {
     font-size: 1.5em;
 }
 
-h1{
+h1 {
     text-align: center;
-    margin: 10px 0;
+    margin: 7px 0;
+    font-size: 25px;
     font-family: 'Courier New', Courier, monospace;
     font-weight: 700;
 }
-.mapContainer{
+
+.mapContainer {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: row;
     justify-content: space-evenly;
 }
-.buttons{
+
+.buttons {
     margin-top: 30px;
 }
 
 .bar {
     fill: steelblue;
 }
+
 .bar:hover {
     fill: orange;
 }
+
 .axis-label {
     font-size: 14px;
 }
-#chart{
+
+#chart {
     margin: 0 auto;
-    width: 40vw;
+    width: auto;
 }
 
-.underCharts{
+.underCharts {
     display: flex;
     justify-content: space-evenly;
     margin-top: 20px;
@@ -92,10 +101,38 @@ h1{
 
 }
 
-.legendContainer1{
+.legendContainer1 {
     display: flex;
     flex-direction: row;
-    margin: 0 20px;
-    align-items: baseline;
-    justify-content: space-around;
+    align-items: center;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-size: 12px;
+    color: whitesmoke;
+    fill: white;
+}
+
+.axis text {
+    font-size: 12px;
+
+}
+
+.start-date,
+.end-date,
+.slider-marker {
+    fill: white;
+}
+
+.dateContainerRows {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly
 }

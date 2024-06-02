@@ -17,14 +17,43 @@ var maxIndex = 999;
 var dataType = "new_cases";
 var wasZero = {};
 var lastValue = {};
+
+const colorPalette = [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd",
+  "#8c564b",
+  "#e377c2",
+  "#7f7f7f",
+  "#bcbd22",
+  "#17becf",
+];
+const countryColorMap = {};
+
+function updateCountryColors(countries) {
+  for (const country in countryColorMap) {
+    if (!countries.includes(country)) {
+      colorPalette.push(countryColorMap[country]);
+      delete countryColorMap[country];
+    }
+  }
+  countries.forEach((country, index) => {
+    if (countryColorMap[country] === undefined) {
+      countryColorMap[country] = colorPalette.shift(); // Przypisz kolor i usuń go z dostępnych
+    }
+  });
+}
+
 const thresholds = {
   new_cases: [
     10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000,
     5000,
   ],
   total_cases: [
-    100000000, 50000000, 10000000, 5000000, 1000000, 500000, 100000, 50000, 10000,
-    5000,
+    100000000, 50000000, 10000000, 5000000, 1000000, 500000, 100000, 50000,
+    10000, 5000,
   ],
   new_deaths: [100000, 50000, 10000, 5000, 2000, 1000, 500, 200, 100, 50],
   total_deaths: [
@@ -86,12 +115,13 @@ function initMap() {
 }
 
 function countryCodeToName(code) {
-    return countryCodes[code] || "Unknown"; // Zwraca nazwę państwa lub "Unknown", jeśli skrót nie został znaleziony w słowniku
-  }
+  return countryCodes[code] || "Unknown"; // Zwraca nazwę państwa lub "Unknown", jeśli skrót nie został znaleziony w słowniku
+}
 
 function loadData() {
   d3.csv("covid.csv").then((data) => {
     const groupedData = {};
+    let groupedDataTemp = {};
     let maxTests = 0;
     let maxCases = 0;
     let maxDeaths = 0;
@@ -105,25 +135,20 @@ function loadData() {
     let maxTotalTestsPerThousand = 0;
     let maxNewTestsPerThousand = 0;
 
-    data.forEach(row => {
+    data.forEach((row) => {
+      const code = row.iso_code;
+      const country = row.location;
+      if (!(code in countryCodes)) {
+        countryCodes[code] = country;
+      }
+    });
 
-        const code = row.iso_code;
-        const country = row.location;
-        if (!(code in countryCodes)) {
-          countryCodes[code] = country;
-        }
-      });
-      console.log(countryCodes);
-
-    // Iteracja po danych
     data.forEach((d) => {
-      // Tworzenie klucza dla danej daty, jeśli nie istnieje
-      if (!groupedData[d.date]) {
-        groupedData[d.date] = {};
+      if (!groupedDataTemp[d.date]) {
+        groupedDataTemp[d.date] = {};
       }
 
-      // Dodawanie danych dla danego kraju do danej daty
-      groupedData[d.date][d.iso_code] = {
+      groupedDataTemp[d.date][d.iso_code] = {
         new_cases: +d.new_cases,
         total_cases: +d.total_cases,
         new_deaths: +d.new_deaths,
@@ -138,7 +163,6 @@ function loadData() {
         new_tests_per_thousand: +d.new_tests_per_thousand,
       };
 
-      // Aktualizacja maksymalnych wartości
       if (+d.total_tests > maxTests) {
         maxTests = +d.total_tests;
       }
@@ -176,14 +200,20 @@ function loadData() {
         maxNewTestsPerThousand = +d.new_tests_per_thousand;
       }
     });
-
     // Aktualizacja maksymalnej wartości suwaka daty
-    const dates = Object.keys(groupedData);
-    document.getElementById("dateSlider").max = dates.length - 1;
+    let tempDates = Object.keys(groupedDataTemp);
+    const dates = tempDates.sort();
 
-    // Zapisanie zgrupowanych danych do zmiennej covidData
+    dates.forEach((key) => {
+      if (new Date(key) <= new Date("2024-05-10")) {
+        groupedData[key] = groupedDataTemp[key];
+      }
+    });
     covidData = groupedData;
-    maxIndex = dates.length - 1;
+    document.getElementById("dateSlider").max =
+      Object.keys(covidData).length - 1;
+
+    maxIndex = groupedData.length - 1;
 
     console.log("Max Tests: " + maxTests);
     console.log("Max Cases: " + maxCases);
@@ -208,7 +238,7 @@ function updateMap() {
   var dataType = document.getElementById("dataType").value;
   var currentDate = Object.keys(covidData)[currentIndex];
   var dateData = covidData[currentDate];
-  //console.log(dateData);
+
   updateChartColumn(dateData);
 
   geojsonLayer = L.geoJSON(worldGeoJSON, {
@@ -246,7 +276,7 @@ function updateMap() {
     },
   }).addTo(map);
 
-  document.getElementById("dateLabel").innerText = currentDate;
+  updateSliderPosition(new Date(currentDate));
   document.getElementById("dateSlider").value = currentIndex;
 }
 
@@ -339,99 +369,112 @@ function createLegend() {
     legend.appendChild(legendItem);
   }
 }
-const margin = {top: 20, right: 30, bottom: 60, left: 90},
-              width = 600 - margin.left - margin.right,
-              height = 600 - margin.top - margin.bottom;
+const margin = { top: 20, right: 30, bottom: 60, left: 150 },
+  width = 700 - margin.left - margin.right,
+  height = 500 - margin.top - margin.bottom;
 
-        const svg = d3.select("#chart").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
+const svg = d3
+  .select("#chart")
+  .append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const x = d3.scaleLinear().range([0, width]);
-        const y = d3.scaleBand().range([height, 0]).padding(0.1);
+const x = d3.scaleLinear().range([0, width]);
+const y = d3.scaleBand().range([height, 0]).padding(0.1);
 
-        const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+svg
+  .append("g")
+  .attr("class", "x-axis")
+  .attr("transform", `translate(0,${height})`);
 
-        svg.append("g")
-            .attr("class", "x-axis")
-            .attr("transform", `translate(0,${height})`);
+svg.append("g").attr("class", "y-axis");
 
-        svg.append("g")
-            .attr("class", "y-axis");
+function updateChartColumn(data) {
+  const dataType = document.getElementById("dataType").value;
 
-        function updateChartColumn(data) {
-            const dataType = document.getElementById("dataType").value;
-            
-            if (!dataType.includes("total")) {
-                svg.selectAll(".bar").remove();
-                return;
-            }
-            var countryType = document.getElementById("countryType").value;
+  if (!dataType.includes("total")) {
+    svg.selectAll(".bar").remove();
+    return;
+  }
+  var countryType = document.getElementById("countryType").value;
 
-            let countries = Object.entries(data).map(([country, values]) => ({
-                country: countryCodeToName(country),
-                value: values[dataType]
-            }));
-            const allowedCountries = [
-              "Asia", 
-              "Europe", 
-              "European Union", 
-              "North America", 
-              "South America", 
-              "Africa", 
-              "South Africa",
-              "Australia"
-          ];
+  let countries = Object.entries(data).map(([country, values]) => ({
+    country: countryCodeToName(country),
+    value: values[dataType],
+  }));
+  const allowedCountries = [
+    "Asia",
+    "Europe",
+    "European Union",
+    "North America",
+    "South America",
+    "Africa",
+    "South Africa",
+    "Australia",
+  ];
 
-            if(countryType=="country"){
-              countries=countries.filter(entry => 
-              entry.country !== "World" && 
-              entry.country !== "High income" && 
-              entry.country !== "Upper middle income" && 
-              entry.country !== "Lower middle income" &&
-              entry.country !== "Asia" &&
-              entry.country !== "Europe" &&
-              entry.country !== "European Union" &&
-              entry.country !== "North America" &&
-              entry.country !== "South America" &&
-              entry.country !== "Africa" &&
-              entry.country !== "South Africa" &&
-              entry.country !== "Australia"
-          );
-              }else{
-                countries=countries.filter(entry => allowedCountries.includes(entry.country));
-              }
+  if (countryType == "country") {
+    countries = countries.filter(
+      (entry) =>
+        entry.country !== "World" &&
+        entry.country !== "High income" &&
+        entry.country !== "Upper middle income" &&
+        entry.country !== "Lower middle income" &&
+        entry.country !== "Asia" &&
+        entry.country !== "Europe" &&
+        entry.country !== "European Union" &&
+        entry.country !== "North America" &&
+        entry.country !== "South America" &&
+        entry.country !== "Africa" &&
+        entry.country !== "South Africa" &&
+        entry.country !== "Australia"
+    );
+  } else {
+    countries = countries.filter((entry) =>
+      allowedCountries.includes(entry.country)
+    );
+  }
 
-            countries = countries.sort((a, b) => b.value - a.value).slice(0, 20);
-            countries = countries.reverse();
+  countriesBest = countries.sort((a, b) => b.value - a.value).slice(0, 10);
+  countriesBest = countriesBest.reverse();
 
-            const maxValue = d3.max(countries, d => d.value);
-            x.domain([0, maxValue]);
-            y.domain(countries.map(d => d.country)).padding(0.1);
+  updateCountryColors(countriesBest.map((d) => d.country));
 
-            svg.select(".x-axis")
-                .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".2s")));
+  const maxValue = d3.max(countriesBest, (d) => d.value);
+  x.domain([0, maxValue]);
+  y.domain(countriesBest.map((d) => d.country)).padding(0.1);
 
-            svg.select(".y-axis")
-                .call(d3.axisLeft(y));
+  svg
+    .select(".x-axis")
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".2s")));
 
-            const bars = svg.selectAll(".bar")
-                .data(countries, d => d.country);
+  svg
+    .select(".y-axis")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "16px");
 
-            bars.enter().append("rect")
-                .attr("class", "bar")
-                .attr("y", d => y(d.country))
-                .attr("height", y.bandwidth())
-                .style("fill", d => colorScale(d.country))
-                .merge(bars)
-                .attr("x", 0)
-                .attr("width", d => x(d.value))
-                .attr("y", d => y(d.country))
-                .attr("height", y.bandwidth());
+  const bars = svg.selectAll(".bar").data(countriesBest, (d) => d.country);
 
-            bars.exit().remove();
-        }
+  bars
+    .enter()
+    .append("rect")
+    .attr("class", "bar")
+    .attr("y", (d) => y(d.country))
+    .attr("height", y.bandwidth())
+    .style("fill", (d) => countryColorMap[d.country])
+    .merge(bars)
+    .attr("x", 0)
+    .attr("width", (d) => x(d.value))
+    .attr("y", (d) => y(d.country))
+    .attr("height", y.bandwidth());
 
-        document.getElementById("dataType").addEventListener("change", () => updateChartColumn(data));
+  console.log(countryColorMap);
+  bars.exit().remove();
+}
+
+document
+  .getElementById("dataType")
+  .addEventListener("change", () => updateChartColumn(data));

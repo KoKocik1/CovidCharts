@@ -9,66 +9,69 @@
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
 
 <body>
-    <h1>COVID 2020-2024</h1>
+    <h1>COVID 01.01.2020r. - 10.05.2024r.</h1>
     <div class="legendContainer">
         <div class="legend" id="legend"></div>
     </div>
     <div class="mapContainer">
         <div id="map"></div>
-        <div id="chart"></div>
+        <div class="">
+            <div id="chart"></div>
+            <div class="dateContainerRows">
+                <div class="buttons mt-2">
+                    <button class="btn btn-success" id="start">Start</button>
+                    <button class="btn btn-danger" id="stop">Stop</button>
+                    <button class="btn btn-warning" id="reset">Reset</button>
+                </div>
+                <div class="speed mt-2">
+                    <label for="speedControl">Speed:</label>
+                    <input class="form-range" type="range" id="speedControl" min="0" max="499" value="1">
+                </div>
+                <div class="">
+                    <div class="selectData mt-2">
+                        <select class="form-select" id="dataType">
+                            <option value="new_cases">New Cases</option>
+                            <option value="total_cases">Total Cases</option>
+                            <option value="new_deaths">New Deaths</option>
+                            <option value="total_deaths">Total Deaths</option>
+                            <option value="new_tests">New Tests</option>
+                            <option value="total_tests">Total Tests</option>
+                            <option value="total_cases_per_million">Total Cases Per Million</option>
+                            <option value="new_cases_per_million">New Cases Per Million</option>
+                            <option value="total_deaths_per_million">Total Deaths Per Million</option>
+                            <option value="new_deaths_per_million">New Deaths Per Million</option>
+                            <option value="total_tests_per_thousand">Total Tests Per Thousand</option>
+                            <option value="new_tests_per_thousand">New Tests Per Thousand</option>
+                        </select>
+                    </div>
+
+                    <div class="selectData mt-2">
+                        <select class="form-select" id="countryType">
+                            <option value="country">Countries</option>
+                            <option value="continent">Continent</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-        <div class="legendContainer1">
-            
-            
-            <div class="buttons mt-2">
-                <button class="btn btn-success" id="start">Start</button>
-                <button class="btn btn-danger" id="stop">Stop</button>
-                <button class="btn btn-warning" id="reset">Reset</button>
-            </div>
-            <div class="dateContainer mt-2">
-                <label for="dateSlider">Date:</label>
-                <input class="form-range" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
-            </div>
-            <span class="badge badge-primary date" id="dateLabel"></span>
-
-            <div class="speed mt-2">
-                <label for="speedControl">Speed:</label>
-                <input class="form-range" type="range" id="speedControl" min="0" max="499" value="1">
-            </div>
-
-            <div class="selectData mt-2">
-                <select class="form-select" id="dataType">
-                    <option value="new_cases">New Cases</option>
-                    <option value="total_cases">Total Cases</option>
-                    <option value="new_deaths">New Deaths</option>
-                    <option value="total_deaths">Total Deaths</option>
-                    <option value="new_tests">New Tests</option>
-                    <option value="total_tests">Total Tests</option>
-                    <option value="total_cases_per_million">Total Cases Per Million</option>
-                    <option value="new_cases_per_million">New Cases Per Million</option>
-                    <option value="total_deaths_per_million">Total Deaths Per Million</option>
-                    <option value="new_deaths_per_million">New Deaths Per Million</option>
-                    <option value="total_tests_per_thousand">Total Tests Per Thousand</option>
-                    <option value="new_tests_per_thousand">New Tests Per Thousand</option>
-                </select>
-            </div>
-
-            <div class="selectData mt-2">
-                <select class="form-select" id="countryType">
-                    <option value="country">Countries</option>
-                    <option value="continent">Continent</option>
-                    </select>
-            </div>
+    <div class="legendContainer1">
+        <div class="dateContainer mt-2">
+            <label for="dateSlider">Date:</label>
+            <input class="form-range" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
+        </div>
+        <svg id="timeLabel" width="1000" height="90"></svg>
     </div>
-    
-   <script src="script.js"></script>
+    <script src="timeLabel.js"></script>
+    <script src="script.js"></script>
 </body>
 
 </html>
