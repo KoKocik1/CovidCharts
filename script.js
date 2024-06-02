@@ -23,7 +23,7 @@ const thresholds = {
     5000,
   ],
   total_cases: [
-    10000000, 5000000, 1000000, 500000, 200000, 100000, 50000, 20000, 10000,
+    100000000, 50000000, 10000000, 5000000, 1000000, 500000, 100000, 50000, 10000,
     5000,
   ],
   new_deaths: [100000, 50000, 10000, 5000, 2000, 1000, 500, 200, 100, 50],
@@ -340,8 +340,8 @@ function createLegend() {
   }
 }
 const margin = {top: 20, right: 30, bottom: 60, left: 90},
-              width = 800 - margin.left - margin.right,
-              height = 800 - margin.top - margin.bottom;
+              width = 600 - margin.left - margin.right,
+              height = 600 - margin.top - margin.bottom;
 
         const svg = d3.select("#chart").append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -368,11 +368,41 @@ const margin = {top: 20, right: 30, bottom: 60, left: 90},
                 svg.selectAll(".bar").remove();
                 return;
             }
+            var countryType = document.getElementById("countryType").value;
 
             let countries = Object.entries(data).map(([country, values]) => ({
                 country: countryCodeToName(country),
                 value: values[dataType]
             }));
+            const allowedCountries = [
+              "Asia", 
+              "Europe", 
+              "European Union", 
+              "North America", 
+              "South America", 
+              "Africa", 
+              "South Africa",
+              "Australia"
+          ];
+
+            if(countryType=="country"){
+              countries=countries.filter(entry => 
+              entry.country !== "World" && 
+              entry.country !== "High income" && 
+              entry.country !== "Upper middle income" && 
+              entry.country !== "Lower middle income" &&
+              entry.country !== "Asia" &&
+              entry.country !== "Europe" &&
+              entry.country !== "European Union" &&
+              entry.country !== "North America" &&
+              entry.country !== "South America" &&
+              entry.country !== "Africa" &&
+              entry.country !== "South Africa" &&
+              entry.country !== "Australia"
+          );
+              }else{
+                countries=countries.filter(entry => allowedCountries.includes(entry.country));
+              }
 
             countries = countries.sort((a, b) => b.value - a.value).slice(0, 20);
             countries = countries.reverse();

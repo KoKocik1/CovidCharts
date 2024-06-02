@@ -27,23 +27,23 @@
         <div class="legendContainer1">
             
             
-            <div class="buttons mt-5">
+            <div class="buttons mt-2">
                 <button class="btn btn-success" id="start">Start</button>
                 <button class="btn btn-danger" id="stop">Stop</button>
                 <button class="btn btn-warning" id="reset">Reset</button>
             </div>
-            <div class="dateContainer mt-5">
+            <div class="dateContainer mt-2">
                 <label for="dateSlider">Date:</label>
                 <input class="form-range" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
             </div>
             <span class="badge badge-primary date" id="dateLabel"></span>
 
-            <div class="speed mt-5">
+            <div class="speed mt-2">
                 <label for="speedControl">Speed:</label>
                 <input class="form-range" type="range" id="speedControl" min="0" max="499" value="1">
             </div>
 
-            <div class="selectData mt-5">
+            <div class="selectData mt-2">
                 <select class="form-select" id="dataType">
                     <option value="new_cases">New Cases</option>
                     <option value="total_cases">Total Cases</option>
@@ -58,6 +58,13 @@
                     <option value="total_tests_per_thousand">Total Tests Per Thousand</option>
                     <option value="new_tests_per_thousand">New Tests Per Thousand</option>
                 </select>
+            </div>
+
+            <div class="selectData mt-2">
+                <select class="form-select" id="countryType">
+                    <option value="country">Countries</option>
+                    <option value="continent">Continent</option>
+                    </select>
             </div>
     </div>
     
