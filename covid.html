@@ -16,59 +16,64 @@
 </head>
 
 <body>
-    <h1>COVID 01.01.2020r. - 10.05.2024r.</h1>
-    <div class="legendContainer">
-        <div class="legend" id="legend"></div>
+    <div class="loaderBox">
+        <div class="loader"></div>
     </div>
-    <div class="mapContainer">
-        <div id="map"></div>
-        <div class="">
-            <div id="chart"></div>
-            <div class="dateContainerRows">
-                <div class="buttons mt-2">
-                    <button class="btn btn-success" id="start">Start</button>
-                    <button class="btn btn-danger" id="stop">Stop</button>
-                    <button class="btn btn-warning" id="reset">Reset</button>
-                </div>
-                <div class="speed mt-2">
-                    <label for="speedControl">Speed:</label>
-                    <input class="form-range accent" type="range" id="speedControl" min="0" max="499" value="1">
-                </div>
-                <div class="">
-                    <div class="selectData mt-2">
-                        <select class="form-select bg-dark text-white" id="dataType">
-                            <option value="new_cases">New Cases</option>
-                            <option value="total_cases">Total Cases</option>
-                            <option value="new_deaths">New Deaths</option>
-                            <option value="total_deaths">Total Deaths</option>
-                            <option value="new_tests">New Tests</option>
-                            <option value="total_tests">Total Tests</option>
-                            <option value="total_cases_per_million">Total Cases Per Million</option>
-                            <option value="new_cases_per_million">New Cases Per Million</option>
-                            <option value="total_deaths_per_million">Total Deaths Per Million</option>
-                            <option value="new_deaths_per_million">New Deaths Per Million</option>
-                            <option value="total_tests_per_thousand">Total Tests Per Thousand</option>
-                            <option value="new_tests_per_thousand">New Tests Per Thousand</option>
-                        </select>
+    <div class="content">
+        <h1>COVID 01.01.2020r. - 10.05.2024r.</h1>
+        <div class="legendContainer">
+            <div class="legend" id="legend"></div>
+        </div>
+        <div class="mapContainer">
+            <div id="map" class="left"></div>
+            <div class="right">
+                <div id="chart"></div>
+                <div class="dateContainerRows">
+                    <div class="buttons mt-2">
+                        <button class="btn btn-success" id="start">Start</button>
+                        <button class="btn btn-danger" id="stop">Stop</button>
+                        <button class="btn btn-warning" id="reset">Reset</button>
                     </div>
+                    <div class="speed mt-2">
+                        <label for="speedControl">Speed:</label>
+                        <input class="form-range accent" type="range" id="speedControl" min="0" max="499" value="1">
+                    </div>
+                    <div class="">
+                        <div class="selectData mt-2">
+                            <select class="form-select bg-dark text-white" id="dataType">
+                                <option value="new_cases">New Cases</option>
+                                <option value="total_cases">Total Cases</option>
+                                <option value="new_deaths">New Deaths</option>
+                                <option value="total_deaths">Total Deaths</option>
+                                <option value="new_tests">New Tests</option>
+                                <option value="total_tests">Total Tests</option>
+                                <option value="total_cases_per_million">Total Cases Per Million</option>
+                                <option value="new_cases_per_million">New Cases Per Million</option>
+                                <option value="total_deaths_per_million">Total Deaths Per Million</option>
+                                <option value="new_deaths_per_million">New Deaths Per Million</option>
+                                <option value="total_tests_per_thousand">Total Tests Per Thousand</option>
+                                <option value="new_tests_per_thousand">New Tests Per Thousand</option>
+                            </select>
+                        </div>
 
-                    <div class="selectData mt-2">
-                        <select class="form-select bg-dark text-white" id="dataTypeColumnChart">
-                            <option value="countries">Countries</option>
-                            <option value="continents">Continent</option>
-                        </select>
+                        <div class="selectData mt-2">
+                            <select class="form-select bg-dark text-white" id="dataTypeColumnChart">
+                                <option value="countries">Countries</option>
+                                <option value="continents">Continent</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
+
         </div>
+        <div class="legendContainer1">
 
-    </div>
-    <div class="legendContainer1">
-
-        <svg id="timeLabel" width="1000" height="90"></svg>
-        <div class="dateContainer mt-2">
-            <label for="dateSlider">Date:</label>
-            <input class="form-range accent" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
+            <svg id="timeLabel" width="1000" height="90"></svg>
+            <div class="dateContainer mt-2">
+                <label for="dateSlider">Date:</label>
+                <input class="form-range accent" type="range" id="dateSlider" min="0" max="0" step="1" value="0">
+            </div>
         </div>
     </div>
     <script src="js/script.js"></script>

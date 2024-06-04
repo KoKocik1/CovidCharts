@@ -1,4 +1,7 @@
 //get geojson
+var content = document.getElementsByClassName("content")[0];
+var loader = document.getElementsByClassName("loaderBox")[0];
+
 fetch(
   "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 )
@@ -229,6 +232,9 @@ function loadData() {
     console.log("Max New Deaths Per Million: " + maxNewDeathsPerMillion);
     console.log("Max Total Tests Per Thousand: " + maxTotalTestsPerThousand);
     console.log("Max New Tests Per Thousand: " + maxNewTestsPerThousand);
+
+    loader.hidden = true;
+    //content.hidden = false;
 
     updateMap();
   });
