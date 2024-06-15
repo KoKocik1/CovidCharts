@@ -195,11 +195,29 @@ h1 {
     .legend {
         align-items: center
     }
+
+    #map {
+        height: 80vh;
+        width: 80vw;
+    }
+
+    .dateContainerRows {
+        flex-direction: column
+    }
 }
 
 @media screen and (max-width: 685px) {
 
     #timeLabel {
         font-size: 12px;
+    }
+
+    #map {
+        height: 80vh;
+        width: 95vw;
+    }
+
+    .dateContainerRows {
+        flex-direction: column;
     }
 }

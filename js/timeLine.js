@@ -1,7 +1,30 @@
+var timeLineWidth = 1000;
+var timeLineHeight = 90;
+if (window.innerWidth <= 1024) {
+  timeLineWidth = window.innerWidth * 0.9;
+}
 const svgTime = d3.select("#timeLabel");
+// event when window width changes
+window.addEventListener("resize", function () {
+  if (window.innerWidth <= 1024) {
+    timeLineWidth = window.innerWidth * 0.9;
+  } else {
+    timeLineWidth = 1000;
+  }
+  svgTime.attr("width", timeLineWidth).attr("height", timeLineHeight);
+  const widthTime = +timeLineWidth - marginTime.left - marginTime.right;
+  const heightTime = +timeLineHeight - marginTime.top - marginTime.bottom;
+  xTime.range([0, widthTime]);
+  g.select(".x.axis").call(xAxis);
+  g.select(".start-date").attr("y", heightTime);
+  g.select(".end-date").attr("x", widthTime + 50);
+  updateSliderPosition(startDateTime);
+});
+
+svgTime.attr("width", timeLineWidth).attr("height", timeLineHeight);
 const marginTime = { top: 20, right: 100, bottom: 50, left: 100 };
-const widthTime = +svgTime.attr("width") - marginTime.left - marginTime.right;
-const heightTime = +svgTime.attr("height") - marginTime.top - marginTime.bottom;
+const widthTime = +timeLineWidth - marginTime.left - marginTime.right;
+const heightTime = +timeLineHeight - marginTime.top - marginTime.bottom;
 
 // time for timeLine
 const startDateTime = new Date("2019-12-31"); // for 2020 on x asix
@@ -45,21 +68,21 @@ g.append("g")
 
 g.append("text")
   .attr("class", "start-date")
-  .attr("x", 0)
-  .attr("y", heightTime - 20)
+  .attr("x", -50)
+  .attr("y", heightTime)
   .attr("dy", ".35em")
   .attr("text-anchor", "start")
   .attr("color", "white")
-  .text(d3.timeFormat("%b %d, %Y")(startDateData));
+  .text(d3.timeFormat("%b %d")(startDateData));
 
 g.append("text")
   .attr("class", "end-date")
-  .attr("x", widthTime)
-  .attr("y", heightTime - 20)
+  .attr("x", widthTime + 50)
+  .attr("y", heightTime)
   .attr("dy", ".35em")
   .attr("text-anchor", "end")
   .attr("color", "white")
-  .text(d3.timeFormat("%b %d, %Y")(endDateTime));
+  .text(d3.timeFormat("%b %d")(endDateTime));
 
 //slider settings
 const dateSliderTime = document.getElementById("dateSlider");

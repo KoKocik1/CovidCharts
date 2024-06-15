@@ -94,10 +94,21 @@ const colorsMap = [
 ];
 
 //********************* column chart prepare *********************//
-const margin = { top: 20, right: 30, bottom: 60, left: 150 },
+let margin = { top: 20, right: 30, bottom: 60, left: 150 },
   width = 700 - margin.left - margin.right,
   height = 500 - margin.top - margin.bottom;
 
+let fontSize = "16px";
+function changeWidth() {
+  if (window.innerWidth <= 1024) {
+    width = window.innerWidth * 0.9 - margin.left * 0.8 - margin.right * 0.8;
+    fontSize = "12px";
+  } else {
+    width = 700 - margin.left - margin.right;
+    fontSize = "16px";
+  }
+}
+changeWidth();
 const svg = d3
   .select("#chart")
   .append("svg")
@@ -105,6 +116,25 @@ const svg = d3
   .attr("height", height + margin.top + margin.bottom)
   .append("g")
   .attr("transform", `translate(${margin.left},${margin.top})`);
+
+//resize chart when width change
+window.addEventListener("resize", function () {
+  changeWidth();
+  // set new width:
+  d3.select("#chart")
+    .select("svg")
+    .attr("width", width + margin.left + margin.right);
+  x.range([0, width]);
+  svg
+    .select(".x-axis")
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".2s")));
+  updateChartColumn(covidData[Object.keys(covidData)[currentIndex]]);
+});
+svg
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .attr("transform", `translate(${margin.left},${margin.top})`)
+  .append("g");
 
 const x = d3.scaleLinear().range([0, width]);
 const y = d3.scaleBand().range([height, 0]).padding(0.1);
@@ -402,14 +432,14 @@ function updateChartColumn(data) {
 
   svg
     .select(".x-axis")
-    .style("font-size", "16px")
+    .style("font-size", fontSize)
     .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".2s")));
 
   svg
     .select(".y-axis")
     .call(d3.axisLeft(y))
     .selectAll("text")
-    .style("font-size", "16px");
+    .style("font-size", fontSize);
 
   const bars = svg.selectAll(".bar").data(countriesBest, (d) => d.country);
 
